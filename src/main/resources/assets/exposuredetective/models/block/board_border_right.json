@@ -1,0 +1,24 @@
+{
+	"format_version": "26.3",
+	"credit": "Made with Blockbench",
+	"texture_size": [32, 32],
+	"textures": {
+		"1": "exposuredetective:block/board_border",
+		"particle": "exposuredetective:block/board"
+	},
+	"elements": [
+		{
+			"from": [15.999, -2, 14],
+			"to": [17.999, 18, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [-0.001, 0, 0]},
+			"faces": {
+				"north": {"uv": [1, 0, 2, 10], "texture": "#1"},
+				"east": {"uv": [2, 0, 1, 10], "texture": "#1"},
+				"south": {"uv": [1, 0, 2, 10], "texture": "#1"},
+				"west": {"uv": [1, 0, 2, 10], "texture": "#1"},
+				"up": {"uv": [1, 0, 2, 1], "texture": "#1"},
+				"down": {"uv": [1, 0, 2, 1], "texture": "#1"}
+			}
+		}
+	]
+}

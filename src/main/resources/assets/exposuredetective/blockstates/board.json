@@ -1,0 +1,28 @@
+{
+  "multipart": [
+    { "when": { "facing": "north" }, "apply": { "model": "exposuredetective:block/board_base" } },
+    { "when": { "facing": "east" }, "apply": { "model": "exposuredetective:block/board_base", "y": 90 } },
+    { "when": { "facing": "south" }, "apply": { "model": "exposuredetective:block/board_base", "y": 180 } },
+    { "when": { "facing": "west" }, "apply": { "model": "exposuredetective:block/board_base", "y": 270 } },
+
+    { "when": { "facing": "north", "border_up": "true" }, "apply": { "model": "exposuredetective:block/board_border_up" } },
+    { "when": { "facing": "east", "border_up": "true" }, "apply": { "model": "exposuredetective:block/board_border_up", "y": 90 } },
+    { "when": { "facing": "south", "border_up": "true" }, "apply": { "model": "exposuredetective:block/board_border_up", "y": 180 } },
+    { "when": { "facing": "west", "border_up": "true" }, "apply": { "model": "exposuredetective:block/board_border_up", "y": 270 } },
+
+    { "when": { "facing": "north", "border_down": "true" }, "apply": { "model": "exposuredetective:block/board_border_down" } },
+    { "when": { "facing": "east", "border_down": "true" }, "apply": { "model": "exposuredetective:block/board_border_down", "y": 90 } },
+    { "when": { "facing": "south", "border_down": "true" }, "apply": { "model": "exposuredetective:block/board_border_down", "y": 180 } },
+    { "when": { "facing": "west", "border_down": "true" }, "apply": { "model": "exposuredetective:block/board_border_down", "y": 270 } },
+
+    { "when": { "facing": "north", "border_left": "true" }, "apply": { "model": "exposuredetective:block/board_border_left" } },
+    { "when": { "facing": "east", "border_left": "true" }, "apply": { "model": "exposuredetective:block/board_border_left", "y": 90 } },
+    { "when": { "facing": "south", "border_left": "true" }, "apply": { "model": "exposuredetective:block/board_border_left", "y": 180 } },
+    { "when": { "facing": "west", "border_left": "true" }, "apply": { "model": "exposuredetective:block/board_border_left", "y": 270 } },
+
+    { "when": { "facing": "north", "border_right": "true" }, "apply": { "model": "exposuredetective:block/board_border_right" } },
+    { "when": { "facing": "east", "border_right": "true" }, "apply": { "model": "exposuredetective:block/board_border_right", "y": 90 } },
+    { "when": { "facing": "south", "border_right": "true" }, "apply": { "model": "exposuredetective:block/board_border_right", "y": 180 } },
+    { "when": { "facing": "west", "border_right": "true" }, "apply": { "model": "exposuredetective:block/board_border_right", "y": 270 } }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "block.exposuredetective.board": "Доска",
+  "item.exposuredetective.red_string": "Красная нить",
+  "item.exposuredetective.magnifier": "Лупа",
+  "item.exposuredetective.invisible_ink": "Невидимые чернила",
+  "item.exposuredetective.red_ink": "Красные чернила",
+  "item.exposuredetective.orange_ink": "Оранжевые чернила",
+  "item.exposuredetective.yellow_ink": "Жёлтые чернила",
+  "item.exposuredetective.lime_ink": "Лаймовые чернила",
+  "item.exposuredetective.green_ink": "Зелёные чернила",
+  "item.exposuredetective.light_blue_ink": "Голубые чернила",
+  "item.exposuredetective.blue_ink": "Синие чернила",
+  "item.exposuredetective.pink_ink": "Розовые чернила",
+  "item.exposuredetective.magenta_ink": "Пурпурные чернила",
+  "item.exposuredetective.purple_ink": "Фиолетовые чернила",
+  "item.exposuredetective.black_ink": "Чёрные чернила",
+  "item.exposuredetective.gray_ink": "Серые чернила",
+  "item.exposuredetective.light_gray_ink": "Светло-серые чернила",
+  "item.exposuredetective.white_ink": "Белые чернила",
+  "item.exposuredetective.brown_ink": "Коричневые чернила",
+  "item.exposuredetective.detective_hat": "Детективная шляпа"
+}
