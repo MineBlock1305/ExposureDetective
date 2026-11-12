@@ -1,6 +1,7 @@
 package com.mineblock.exposuredetective.block.entity;
 
 import com.mineblock.exposuredetective.block.BoardBlock;
+import com.mineblock.exposuredetective.item.RgbThreadSpoolItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -36,7 +37,7 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
     private static final String ROTATION_TAG = "Rotations";
     private static final String CONNECTIONS_TAG = "Connections";
     private static final int SLOT_COUNT = 9;
-    private static final int MAX_CONNECTIONS_PER_SLOT = 12;
+    private static final int MAX_CONNECTIONS_PER_SLOT = 16;
 
     private NonNullList<ItemStack> stacks = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final float[] rotations = new float[SLOT_COUNT];
@@ -46,7 +47,7 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
         super(ExposuredetectiveModBlockEntities.BOARD.get(), position, state);
     }
 
-    // region Persistence
+    
 
     @Override
     public void loadAdditional(CompoundTag compound, HolderLookup.Provider lookupProvider) {
@@ -84,9 +85,9 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
         return this.saveWithFullMetadata(lookupProvider);
     }
 
-    // endregion
+    
 
-    // region Container
+    
 
     @Override
     public int getContainerSize() {
@@ -130,7 +131,7 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
 
     @Override
     public boolean canPlaceItem(int index, ItemStack stack) {
-        // Разрешаем только фотографии. Остальное отсекаем.
+        
         return BoardBlock.isPhotograph(stack);
     }
 
@@ -149,9 +150,9 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
         return true;
     }
 
-    // endregion
+    
 
-    // region Rotations
+    
 
     public float getRotation(int index) {
         return isValidSlot(index) ? rotations[index] : 0f;
@@ -164,9 +165,9 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
         }
     }
 
-    // endregion
+    
 
-    // region Connections
+    
 
     public List<PhotoConnection> getConnections(int slot) {
         if (!isValidSlot(slot)) {
@@ -179,7 +180,7 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
         return isValidSlot(slot) && !connections[slot].isEmpty();
     }
 
-    public boolean addConnection(int slot, BlockPos otherPos, int otherSlot) {
+    public boolean addConnection(int slot, BlockPos otherPos, int otherSlot, int colorRgb) {
         if (!isValidSlot(slot) || !isValidSlot(otherSlot)) {
             return false;
         }
@@ -187,13 +188,16 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
             return false;
         }
 
-        PhotoConnection connection = new PhotoConnection(otherPos.immutable(), otherSlot);
+        int storedColor = RgbThreadSpoolItem.isRgbColor(colorRgb)
+                ? RgbThreadSpoolItem.SENTINEL
+                : (colorRgb & 0x00FFFFFF);
+        PhotoConnection connection = new PhotoConnection(otherPos.immutable(), otherSlot, storedColor);
         if (connections[slot].contains(connection)) {
             return false;
         }
 
         connections[slot].add(connection);
-        setChanged();
+        syncToClient();
         return true;
     }
 
@@ -201,53 +205,53 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
         if (!isValidSlot(slot)) {
             return false;
         }
-
-        boolean removed = connections[slot].remove(new PhotoConnection(otherPos.immutable(), otherSlot));
+        BlockPos immutable = otherPos.immutable();
+        boolean removed = connections[slot].removeIf(c -> c.pos().equals(immutable) && c.slot() == otherSlot);
         if (removed) {
-            setChanged();
+            syncToClient();
         }
         return removed;
     }
 
-    /**
-     * Очищает все связи указанного слота и снимает обратные связи на других досках.
-     * @return количество удалённых связей
-     */
-    public int clearConnections(Level level, int slot) {
+    
+    
+    public List<Integer> clearConnections(Level level, int slot) {
         if (!isValidSlot(slot) || level == null || level.isClientSide) {
-            return 0;
+            return List.of();
         }
 
         List<PhotoConnection> toRemove = List.copyOf(connections[slot]);
-        int removed = toRemove.size();
+        List<Integer> colors = new ArrayList<>(toRemove.size());
 
         for (PhotoConnection connection : toRemove) {
+            colors.add(connection.colorRgb());
             removeConnectionFromOther(level, connection.pos(), connection.slot(), slot);
         }
 
         connections[slot].clear();
+        
 
-        if (removed > 0) {
+        if (!colors.isEmpty()) {
             setChanged();
         }
-        return removed;
+        return colors;
     }
 
-    public int removeAllConnections(Level level) {
+    public List<Integer> removeAllConnections(Level level) {
         if (level == null || level.isClientSide) {
-            return 0;
+            return List.of();
         }
 
-        int total = 0;
+        List<Integer> all = new ArrayList<>();
         for (int slot = 0; slot < SLOT_COUNT; slot++) {
-            total += clearConnections(level, slot);
+            all.addAll(clearConnections(level, slot));
         }
-        return total;
+        return all;
     }
 
-    // endregion
+    
 
-    // region Private helpers
+    
 
     private void loadRotations(CompoundTag tag) {
         Arrays.fill(rotations, 0f);
@@ -292,7 +296,11 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
                         entry.getInt("Y"),
                         entry.getInt("Z")
                 );
-                connections[slot].add(new PhotoConnection(pos, otherSlot));
+                int color = entry.contains("Color") ? entry.getInt("Color") : 0xFF5555;
+                if (!RgbThreadSpoolItem.isRgbColor(color)) {
+                    color = color & 0x00FFFFFF;
+                }
+                connections[slot].add(new PhotoConnection(pos, otherSlot, color));
             }
         }
     }
@@ -302,7 +310,7 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
 
         for (int slot = 0; slot < SLOT_COUNT; slot++) {
             if (connections[slot].isEmpty()) {
-                continue; // не пишем пустые слоты
+                continue; 
             }
 
             CompoundTag slotTag = new CompoundTag();
@@ -315,6 +323,7 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
                 entry.putInt("Y", connection.pos().getY());
                 entry.putInt("Z", connection.pos().getZ());
                 entry.putInt("Slot", connection.slot());
+                entry.putInt("Color", connection.colorRgb());
                 linkList.add(entry);
             }
             slotTag.put("Links", linkList);
@@ -329,6 +338,16 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
     }
 
     @SuppressWarnings("unchecked")
+
+    private void syncToClient() {
+        setChanged();
+        Level level = this.level;
+        if (level != null && !level.isClientSide) {
+            BlockState state = getBlockState();
+            level.sendBlockUpdated(getBlockPos(), state, state, 3);
+        }
+    }
+
     private static List<PhotoConnection>[] createConnectionLists() {
         List<PhotoConnection>[] lists = new List[SLOT_COUNT];
         for (int i = 0; i < SLOT_COUNT; i++) {
@@ -346,7 +365,7 @@ public class BoardBlockEntity extends RandomizableContainerBlockEntity implement
         }
     }
 
-    // endregion
+    
 
-    public record PhotoConnection(BlockPos pos, int slot) {}
+    public record PhotoConnection(BlockPos pos, int slot, int colorRgb) {}
 }

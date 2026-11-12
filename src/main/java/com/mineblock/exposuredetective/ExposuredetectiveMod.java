@@ -34,18 +34,24 @@ import com.mineblock.exposuredetective.init.ExposuredetectiveModBlockEntities;
 @Mod("exposuredetective")
 public class ExposuredetectiveMod {
 	public static final Logger LOGGER = LogManager.getLogger(ExposuredetectiveMod.class);
-	public static final String MODID = "exposuredetective";
+	public static final String MOD_ID = "exposuredetective";
 
 	public ExposuredetectiveMod(IEventBus modEventBus) {
+		
 		ModNetworking.bootstrap();
+		
 		NeoForge.EVENT_BUS.register(this);
 		modEventBus.addListener(this::registerNetworking);
 		ExposuredetectiveModBlocks.REGISTRY.register(modEventBus);
 		ExposuredetectiveModBlockEntities.REGISTRY.register(modEventBus);
 		ExposuredetectiveModItems.REGISTRY.register(modEventBus);
 		ExposuredetectiveModTabs.REGISTRY.register(modEventBus);
+		
+		
 	}
 
+	
+	
 	private static boolean networkingRegistered = false;
 	private static final Map<CustomPacketPayload.Type<?>, NetworkMessage<?>> MESSAGES = new HashMap<>();
 
@@ -60,7 +66,7 @@ public class ExposuredetectiveMod {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private void registerNetworking(final RegisterPayloadHandlersEvent event) {
-		final PayloadRegistrar registrar = event.registrar(MODID);
+		final PayloadRegistrar registrar = event.registrar(MOD_ID);
 		MESSAGES.forEach((id, networkMessage) -> registrar.playBidirectional(id, ((NetworkMessage) networkMessage).reader(), ((NetworkMessage) networkMessage).handler()));
 		networkingRegistered = true;
 	}

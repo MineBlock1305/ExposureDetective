@@ -19,6 +19,7 @@ public final class BoardClientHelper {
 
 	public static void openPhotographScreen(ItemStack stack) {
 		if (!(stack.getItem() instanceof PhotographItem)) {
+			
 			return;
 		}
 		Minecraft.getInstance().setScreen(new PhotographScreen(List.of(new ItemAndStack<>(stack))));

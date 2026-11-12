@@ -45,11 +45,10 @@ import javax.annotation.Nullable;
 
 import com.mineblock.exposuredetective.block.entity.BoardBlockEntity;
 import com.mineblock.exposuredetective.init.ExposuredetectiveModItems;
+import com.mineblock.exposuredetective.util.PhotographItems;
+import com.mineblock.exposuredetective.item.ColoredStringItem;
 
-/**
- * Пробковая доска. Общий (common) класс — никаких прямых ссылок на client-only классы Exposure.
- * Открытие фото происходит через клиентский хелпер (reflection).
- */
+
 public class BoardBlock extends Block implements EntityBlock {
 
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
@@ -57,19 +56,24 @@ public class BoardBlock extends Block implements EntityBlock {
     public static final BooleanProperty BORDER_DOWN = BooleanProperty.create("border_down");
     public static final BooleanProperty BORDER_LEFT = BooleanProperty.create("border_left");
     public static final BooleanProperty BORDER_RIGHT = BooleanProperty.create("border_right");
+    public static final BooleanProperty CORNER_LEFT_UP = BooleanProperty.create("corner_left_up");
+    public static final BooleanProperty CORNER_LEFT_DOWN = BooleanProperty.create("corner_left_down");
+    public static final BooleanProperty CORNER_RIGHT_UP = BooleanProperty.create("corner_right_up");
+    public static final BooleanProperty CORNER_RIGHT_DOWN = BooleanProperty.create("corner_right_down");
 
     private static final ResourceLocation PHOTOGRAPH_ID = ResourceLocation.fromNamespaceAndPath("exposure", "photograph");
     private static final int GRID_SIZE = 3;
-    private static final double MAX_LINK_DISTANCE_SQR = 9.0D; // ~3 блока
+    private static final double MAX_LINK_DISTANCE_SQR = 9.0D; 
 
-    /** Выделения игроков для красной нити. Concurrent + ленивая очистка. */
-    private static final Map<UUID, Selection> RED_STRING_SELECTIONS = new ConcurrentHashMap<>();
+    
+    private static final Map<UUID, Selection> RED_THREAD_SPOOL_SELECTIONS = new ConcurrentHashMap<>();
 
     @Nullable
     private static Item cachedPhotographItem;
 
     public BoardBlock() {
         super(BlockBehaviour.Properties.of()
+                .mapColor(net.minecraft.world.level.material.MapColor.WOOD)
                 .sound(SoundType.WOOD)
                 .strength(1f, 10f)
                 .noOcclusion()
@@ -81,10 +85,14 @@ public class BoardBlock extends Block implements EntityBlock {
                 .setValue(BORDER_UP, true)
                 .setValue(BORDER_DOWN, true)
                 .setValue(BORDER_LEFT, true)
-                .setValue(BORDER_RIGHT, true));
+                .setValue(BORDER_RIGHT, true)
+                .setValue(CORNER_LEFT_UP, true)
+                .setValue(CORNER_LEFT_DOWN, true)
+                .setValue(CORNER_RIGHT_UP, true)
+                .setValue(CORNER_RIGHT_DOWN, true));
     }
 
-    // region Block properties & shape
+    
 
     @Override
     public boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
@@ -114,7 +122,8 @@ public class BoardBlock extends Block implements EntityBlock {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(FACING, BORDER_UP, BORDER_DOWN, BORDER_LEFT, BORDER_RIGHT);
+        builder.add(FACING, BORDER_UP, BORDER_DOWN, BORDER_LEFT, BORDER_RIGHT,
+                CORNER_LEFT_UP, CORNER_LEFT_DOWN, CORNER_RIGHT_UP, CORNER_RIGHT_DOWN);
     }
 
     @Override
@@ -155,8 +164,15 @@ public class BoardBlock extends Block implements EntityBlock {
 
     private void refreshNeighbors(Level level, BlockPos pos, BlockState state) {
         Direction facing = state.getValue(FACING);
-        for (Direction direction : getPlaneDirections(facing)) {
-            BlockPos neighborPos = pos.relative(direction);
+        Direction left = getLeftDirection(facing);
+        Direction right = getRightDirection(facing);
+        
+        BlockPos[] neighbors = {
+                pos.above(), pos.below(), pos.relative(left), pos.relative(right),
+                pos.above().relative(left), pos.above().relative(right),
+                pos.below().relative(left), pos.below().relative(right)
+        };
+        for (BlockPos neighborPos : neighbors) {
             BlockState neighborState = level.getBlockState(neighborPos);
             if (neighborState.getBlock() == this) {
                 BlockState updatedNeighbor = withBorders(level, neighborPos, neighborState);
@@ -173,11 +189,27 @@ public class BoardBlock extends Block implements EntityBlock {
         }
 
         Direction facing = state.getValue(FACING);
+        Direction left = getLeftDirection(facing);
+        Direction right = getRightDirection(facing);
+
+        boolean hasUp = hasConnectedBoard(level, pos.above(), facing);
+        boolean hasDown = hasConnectedBoard(level, pos.below(), facing);
+        boolean hasLeft = hasConnectedBoard(level, pos.relative(left), facing);
+        boolean hasRight = hasConnectedBoard(level, pos.relative(right), facing);
+        boolean hasLeftUp = hasConnectedBoard(level, pos.above().relative(left), facing);
+        boolean hasLeftDown = hasConnectedBoard(level, pos.below().relative(left), facing);
+        boolean hasRightUp = hasConnectedBoard(level, pos.above().relative(right), facing);
+        boolean hasRightDown = hasConnectedBoard(level, pos.below().relative(right), facing);
+
         return state
-                .setValue(BORDER_UP, !hasConnectedBoard(level, pos.above(), facing))
-                .setValue(BORDER_DOWN, !hasConnectedBoard(level, pos.below(), facing))
-                .setValue(BORDER_LEFT, !hasConnectedBoard(level, pos.relative(getLeftDirection(facing)), facing))
-                .setValue(BORDER_RIGHT, !hasConnectedBoard(level, pos.relative(getRightDirection(facing)), facing));
+                .setValue(BORDER_UP, !hasUp)
+                .setValue(BORDER_DOWN, !hasDown)
+                .setValue(BORDER_LEFT, !hasLeft)
+                .setValue(BORDER_RIGHT, !hasRight)
+                .setValue(CORNER_LEFT_UP, !hasLeft && !hasUp && !hasLeftUp)
+                .setValue(CORNER_LEFT_DOWN, !hasLeft && !hasDown && !hasLeftDown)
+                .setValue(CORNER_RIGHT_UP, !hasRight && !hasUp && !hasRightUp)
+                .setValue(CORNER_RIGHT_DOWN, !hasRight && !hasDown && !hasRightDown);
     }
 
     private static boolean hasConnectedBoard(LevelAccessor level, BlockPos neighborPos, Direction facing) {
@@ -217,9 +249,9 @@ public class BoardBlock extends Block implements EntityBlock {
         return state.rotate(mirrorIn.getRotation(state.getValue(FACING)));
     }
 
-    // endregion
+    
 
-    // region Interaction
+    
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
@@ -254,15 +286,15 @@ public class BoardBlock extends Block implements EntityBlock {
         }
 
         boolean holdingPhotograph = isPhotograph(held);
-        boolean holdingRedString = isRedString(held);
+        boolean holdingString = isString(held);
         ItemStack stored = board.getItem(slot);
 
-        // Красная нить имеет приоритет
-        if (holdingRedString) {
+        
+        if (holdingString) {
             return handleRedStringInteraction(state, level, pos, player, hand, board, slot);
         }
 
-        // Положить фото
+        
         if (holdingPhotograph && stored.isEmpty()) {
             if (!level.isClientSide) {
                 ItemStack placed = held.copyWithCount(1);
@@ -278,21 +310,20 @@ public class BoardBlock extends Block implements EntityBlock {
             return BoardAction.PLACED;
         }
 
-        // Есть фото в слоте
+        
         if (!stored.isEmpty()) {
             boolean emptyHand = hand == null || held.isEmpty();
 
-            // Shift + пустая рука + есть связи → снять все нити
+            
             if (emptyHand && player.isShiftKeyDown() && board.hasConnections(slot)) {
                 if (!level.isClientSide) {
-                    int removed = board.clearConnections(level, slot);
-                    dropStrings(level, pos, removed);
+                    dropStrings(level, pos, board.clearConnections(level, slot));
                     sync(level, pos, state);
                 }
                 return BoardAction.STRING_REMOVED;
             }
 
-            // Shift + пустая рука + нет связей → снять фото
+            
             if (canRemovePhoto(player, hand, held, board, slot)) {
                 if (!level.isClientSide) {
                     ItemStack extracted = stored.copy();
@@ -307,8 +338,8 @@ public class BoardBlock extends Block implements EntityBlock {
                 return BoardAction.REMOVED;
             }
 
-            // Просто посмотреть фото (только клиент). Вызов через reflection,
-            // чтобы common-класс не имел жёсткой ссылки на client-only код.
+            
+            
             if (level.isClientSide) {
                 openPhotographScreenSafe(stored);
             }
@@ -326,33 +357,32 @@ public class BoardBlock extends Block implements EntityBlock {
             return BoardAction.NONE;
         }
 
-        // Shift + нить → снять все связи с этого фото
+        
         if (player.isShiftKeyDown()) {
             if (!level.isClientSide) {
-                int removed = board.clearConnections(level, slot);
-                dropStrings(level, pos, removed);
+                dropStrings(level, pos, board.clearConnections(level, slot));
                 sync(level, pos, state);
             }
             clearSelection(player);
             return BoardAction.STRING_REMOVED;
         }
 
-        // На клиенте только сигнализируем, что идёт линкование
+        
         if (level.isClientSide) {
             return BoardAction.LINKING;
         }
 
-        // Серверная логика выделения
+        
         cleanStaleSelections(level);
 
-        Selection selection = RED_STRING_SELECTIONS.get(player.getUUID());
+        Selection selection = RED_THREAD_SPOOL_SELECTIONS.get(player.getUUID());
 
         if (selection == null) {
-            RED_STRING_SELECTIONS.put(player.getUUID(), new Selection(pos.immutable(), slot));
+            RED_THREAD_SPOOL_SELECTIONS.put(player.getUUID(), new Selection(pos.immutable(), slot));
             return BoardAction.LINKING;
         }
 
-        // Повторный клик по тому же слоту — отмена
+        
         if (selection.pos().equals(pos) && selection.slot() == slot) {
             clearSelection(player);
             return BoardAction.LINKING;
@@ -364,7 +394,7 @@ public class BoardBlock extends Block implements EntityBlock {
             return BoardAction.NONE;
         }
 
-        // Оба слота должны содержать фото
+        
         if (board.getItem(slot).isEmpty() || other.getItem(selection.slot()).isEmpty()) {
             clearSelection(player);
             return BoardAction.NONE;
@@ -375,11 +405,12 @@ public class BoardBlock extends Block implements EntityBlock {
             return BoardAction.NONE;
         }
 
-        boolean linked = board.addConnection(slot, selection.pos(), selection.slot());
-        linked |= other.addConnection(selection.slot(), pos, slot);
+        int stringColor = getStringColor(player.getItemInHand(hand != null ? hand : InteractionHand.MAIN_HAND));
+        boolean linked = board.addConnection(slot, selection.pos(), selection.slot(), stringColor);
+        linked |= other.addConnection(selection.slot(), pos, slot, stringColor);
 
         if (linked) {
-            consumeRedString(player, hand);
+            consumeString(player, hand);
             sync(level, pos, state);
 
             BlockState otherState = level.getBlockState(selection.pos());
@@ -397,29 +428,32 @@ public class BoardBlock extends Block implements EntityBlock {
             return false;
         }
 
-        // Одинаковый facing
+        
         if (firstState.getValue(FACING) != secondState.getValue(FACING)) {
             return false;
         }
 
-        // Дистанция
+        
         return firstPos.distSqr(secondPos) <= MAX_LINK_DISTANCE_SQR;
     }
 
-    // endregion
+    
 
-    // region Helpers
+    
 
     public static boolean isPhotograph(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return false;
-        }
-        Item photograph = resolvePhotographItem();
-        return photograph != null && stack.is(photograph);
+        return PhotographItems.isPhotograph(stack);
     }
 
-    private static boolean isRedString(ItemStack stack) {
-        return !stack.isEmpty() && stack.is(ExposuredetectiveModItems.RED_STRING.get());
+    private static boolean isString(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof ColoredStringItem;
+    }
+
+    private static int getStringColor(ItemStack stack) {
+        if (stack.getItem() instanceof ColoredStringItem colored) {
+            return colored.getColorRgb();
+        }
+        return 0xFF5555;
     }
 
     @Nullable
@@ -460,14 +494,14 @@ public class BoardBlock extends Block implements EntityBlock {
         return Mth.clamp(value, 0.0, 0.999);
     }
 
-    /** Публичный метод для очистки выделения (можно вызывать из ивентов logout). */
+    
     public static void clearSelection(Player player) {
-        RED_STRING_SELECTIONS.remove(player.getUUID());
+        RED_THREAD_SPOOL_SELECTIONS.remove(player.getUUID());
     }
 
-    /** Удаляет выделения, которые больше не указывают на существующую доску. */
+    
     private static void cleanStaleSelections(Level level) {
-        RED_STRING_SELECTIONS.entrySet().removeIf(entry -> {
+        RED_THREAD_SPOOL_SELECTIONS.entrySet().removeIf(entry -> {
             Selection sel = entry.getValue();
             return !(level.getBlockEntity(sel.pos()) instanceof BoardBlockEntity);
         });
@@ -489,43 +523,47 @@ public class BoardBlock extends Block implements EntityBlock {
                 && !board.getItem(slot).isEmpty();
     }
 
-    private static void consumeRedString(Player player, @Nullable InteractionHand hand) {
+    private static void consumeString(Player player, @Nullable InteractionHand hand) {
         if (hand == null || player.getAbilities().instabuild) {
             return;
         }
         ItemStack stack = player.getItemInHand(hand);
-        if (isRedString(stack)) {
-            stack.shrink(1);
-            if (stack.isEmpty()) {
-                player.setItemInHand(hand, ItemStack.EMPTY);
-            }
-        }
-    }
-
-    private static void dropStrings(Level level, BlockPos pos, int count) {
-        if (count <= 0 || level.isClientSide) {
+        if (!isString(stack)) {
             return;
         }
-        ItemStack drop = new ItemStack(ExposuredetectiveModItems.RED_STRING.get(), count);
-        Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, drop);
+        
+        stack.hurtAndBreak(1, player, net.minecraft.world.entity.LivingEntity.getSlotForHand(hand));
     }
 
-    /**
-     * Безопасный вызов клиентского хелпера без жёсткой зависимости common → client.
-     * На dedicated server класс BoardClientHelper отсутствует (или stripped), поэтому reflection.
-     */
+    
+    private static void dropStrings(Level level, BlockPos pos, java.util.List<Integer> colors) {
+        
+    }
+
+    private static net.minecraft.world.item.Item stringItemFromColor(int rgb) {
+        int c = rgb & 0x00FFFFFF;
+        for (net.minecraft.world.item.Item item : ExposuredetectiveModItems.threadSpools()) {
+            if (item instanceof com.mineblock.exposuredetective.item.ColoredStringItem colored
+                    && colored.getColorRgb() == c) {
+                return item;
+            }
+        }
+        return ExposuredetectiveModItems.RED_THREAD_SPOOL.get();
+    }
+
+    
     private static void openPhotographScreenSafe(ItemStack stack) {
         try {
             Class<?> helper = Class.forName("com.mineblock.exposuredetective.client.BoardClientHelper");
             helper.getMethod("openPhotographScreen", ItemStack.class).invoke(null, stack);
         } catch (ReflectiveOperationException | LinkageError e) {
-            // Клиентский код недоступен или API Exposure изменился — просто игнорируем.
+            
         }
     }
 
-    // endregion
+    
 
-    // region BlockEntity & redstone
+    
 
     @Override
     public MenuProvider getMenuProvider(BlockState state, Level worldIn, BlockPos pos) {
@@ -550,8 +588,7 @@ public class BoardBlock extends Block implements EntityBlock {
         if (state.getBlock() != newState.getBlock()) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof BoardBlockEntity be) {
-                int removedStrings = be.removeAllConnections(world);
-                dropStrings(world, pos, removedStrings);
+                dropStrings(world, pos, be.removeAllConnections(world));
                 Containers.dropContents(world, pos, be);
                 world.updateNeighbourForOutputSignal(pos, this);
             }
@@ -573,7 +610,7 @@ public class BoardBlock extends Block implements EntityBlock {
         return 0;
     }
 
-    // endregion
+    
 
     private enum BoardAction {
         NONE,

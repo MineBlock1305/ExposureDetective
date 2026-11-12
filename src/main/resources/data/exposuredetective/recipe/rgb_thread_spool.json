@@ -1,0 +1,42 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "T": {
+      "item": "minecraft:stick"
+    },
+    "R": {
+      "item": "exposuredetective:red_thread_spool"
+    },
+    "O": {
+      "item": "exposuredetective:orange_thread_spool"
+    },
+    "Y": {
+      "item": "exposuredetective:yellow_thread_spool"
+    },
+    "L": {
+      "item": "exposuredetective:lime_thread_spool"
+    },
+    "G": {
+      "item": "exposuredetective:green_thread_spool"
+    },
+    "V": {
+      "item": "exposuredetective:light_blue_thread_spool"
+    },
+    "B": {
+      "item": "exposuredetective:blue_thread_spool"
+    },
+    "P": {
+      "item": "exposuredetective:purple_thread_spool"
+    }
+  },
+  "pattern": [
+    "ROY",
+    "LTG",
+    "VBP"
+  ],
+  "result": {
+    "id": "exposuredetective:rgb_thread_spool",
+    "count": 1
+  }
+}

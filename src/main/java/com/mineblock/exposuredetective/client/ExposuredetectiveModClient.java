@@ -11,7 +11,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 
-@EventBusSubscriber(modid = ExposuredetectiveMod.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = ExposuredetectiveMod.MOD_ID, value = Dist.CLIENT)
 public final class ExposuredetectiveModClient {
 	private ExposuredetectiveModClient() {
 	}

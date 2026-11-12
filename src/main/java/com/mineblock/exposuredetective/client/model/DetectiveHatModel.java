@@ -16,9 +16,9 @@ import net.minecraft.world.entity.LivingEntity;
 
 public class DetectiveHatModel extends HumanoidModel<LivingEntity> {
 	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(
-			ResourceLocation.fromNamespaceAndPath(ExposuredetectiveMod.MODID, "detective_hat"), "main");
-	/** Path for {@link com.mineblock.exposuredetective.item.DetectiveHatItem#getArmorTexture}. */
-	public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(ExposuredetectiveMod.MODID,
+			ResourceLocation.fromNamespaceAndPath(ExposuredetectiveMod.MOD_ID, "detective_hat"), "main");
+	
+	public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(ExposuredetectiveMod.MOD_ID,
 			"textures/entity/detective_hat.png");
 
 	public DetectiveHatModel(ModelPart root) {
@@ -27,7 +27,7 @@ public class DetectiveHatModel extends HumanoidModel<LivingEntity> {
 
 	public static LayerDefinition createBodyLayer() {
 		MeshDefinition mesh = HumanoidModel.createMesh(new CubeDeformation(0), 0);
-		// In 1.21.1 HumanoidModel.hat is a root child (player skin outer layer), not under head.
+		
 		PartDefinition root = mesh.getRoot();
 		root.addOrReplaceChild("hat",
 				CubeListBuilder.create()

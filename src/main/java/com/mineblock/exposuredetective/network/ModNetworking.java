@@ -4,9 +4,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mineblock.exposuredetective.ExposuredetectiveMod;
 
-/**
- * Handles registration of all custom packets. Designed to survive MCreator regenerations by being invoked from the user code block.
- */
+
 public final class ModNetworking {
 	private static final AtomicBoolean BOOTSTRAPPED = new AtomicBoolean(false);
 
@@ -17,8 +15,11 @@ public final class ModNetworking {
 		if (BOOTSTRAPPED.getAndSet(true)) {
 			return;
 		}
+		
 		ExposuredetectiveMod.addNetworkMessage(InvisibleInkDrawPayload.TYPE, InvisibleInkDrawPayload.STREAM_CODEC, InvisibleInkDrawPayload::handle);
 		ExposuredetectiveMod.addNetworkMessage(InvisibleInkDrawBatchPayload.TYPE, InvisibleInkDrawBatchPayload.STREAM_CODEC, InvisibleInkDrawBatchPayload::handle);
+		ExposuredetectiveMod.addNetworkMessage(DrawingSavePayload.TYPE, DrawingSavePayload.STREAM_CODEC, DrawingSavePayload::handle);
+		ExposuredetectiveMod.addNetworkMessage(DrawingRequestPayload.TYPE, DrawingRequestPayload.STREAM_CODEC, DrawingRequestPayload::handle);
+		ExposuredetectiveMod.addNetworkMessage(DrawingSyncPayload.TYPE, DrawingSyncPayload.STREAM_CODEC, DrawingSyncPayload::handle);
 	}
 }
-

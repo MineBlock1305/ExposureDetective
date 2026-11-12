@@ -1,6 +1,30 @@
 {
-  "parent": "item/handheld",
-  "textures": {
-    "layer0": "exposuredetective:item/magnifier"
-  }
+	"format_version": "26.3",
+	"credit": "Made with Blockbench by MineBlock1305",
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "exposuredetective:item/magnifier"
+	},
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [0, 0, 45],
+			"translation": [0, 3, 1],
+			"scale": [0.55, 0.55, 0.55]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [0, 0, -45],
+			"translation": [0, 3, 1],
+			"scale": [0.55, 0.55, 0.55]
+		},
+		"firstperson_righthand": {
+			"rotation": [0, 0, 75],
+			"translation": [-2.87, 5.2, 1.13],
+			"scale": [0.68, 0.68, 0.68]
+		},
+		"firstperson_lefthand": {
+			"rotation": [0, 0, -15],
+			"translation": [-2.87, 5.2, 1.13],
+			"scale": [0.68, 0.68, 0.68]
+		}
+	}
 }

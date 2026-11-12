@@ -8,16 +8,16 @@
 	},
 	"elements": [
 		{
-			"from": [-2, -1.999, 14],
-			"to": [18, 0.001, 16],
-			"rotation": {"angle": 0, "axis": "y", "origin": [0, 0.001, 0]},
+			"from": [0, -1.99, 14],
+			"to": [16, 0.01, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 0.01, 0]},
 			"faces": {
-				"north": {"uv": [3, 0, 4, 10], "rotation": 90, "texture": "#1"},
+				"north": {"uv": [3, 1, 4, 9], "rotation": 90, "texture": "#1"},
 				"east": {"uv": [3, 0, 4, 1], "texture": "#1"},
-				"south": {"uv": [3, 0, 4, 10], "rotation": 90, "texture": "#1"},
+				"south": {"uv": [3, 1, 4, 9], "rotation": 90, "texture": "#1"},
 				"west": {"uv": [3, 0, 4, 1], "texture": "#1"},
-				"up": {"uv": [3, 0, 4, 10], "rotation": 90, "texture": "#1"},
-				"down": {"uv": [3, 0, 4, 10], "rotation": 90, "texture": "#1"}
+				"up": {"uv": [3, 1, 4, 9], "rotation": 90, "texture": "#1"},
+				"down": {"uv": [3, 1, 4, 9], "rotation": 90, "texture": "#1"}
 			}
 		}
 	]

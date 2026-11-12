@@ -1,0 +1,7 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "exposuredetective:item/rgb_thread_spool_base",
+    "layer1": "exposuredetective:item/rgb_thread_spool_tint"
+  }
+}

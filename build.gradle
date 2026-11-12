@@ -35,7 +35,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.mortuusars.exposure:exposure-1.21.1-neoforge:1.9.19") {
+    implementation("io.github.mortuusars.exposure:exposure-1.21.1-neoforge:1.9.21") {
         transitive = false
     }
 }

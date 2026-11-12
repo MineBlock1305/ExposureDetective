@@ -1,0 +1,22 @@
+{
+	"credit": "Corner left-down",
+	"texture_size": [32, 32],
+	"textures": {
+		"1": "exposuredetective:block/board_border",
+		"particle": "exposuredetective:block/board"
+	},
+	"elements": [
+		{
+			"from": [-2, -2, 14],
+			"to": [0, 0, 16],
+			"faces": {
+				"north": {"uv": [0, 0, 1, 1], "texture": "#1"},
+				"east": {"uv": [0, 0, 1, 1], "texture": "#1"},
+				"south": {"uv": [0, 0, 1, 1], "texture": "#1"},
+				"west": {"uv": [0, 0, 1, 1], "texture": "#1"},
+				"up": {"uv": [0, 0, 1, 1], "texture": "#1"},
+				"down": {"uv": [0, 0, 1, 1], "texture": "#1"}
+			}
+		}
+	]
+}
